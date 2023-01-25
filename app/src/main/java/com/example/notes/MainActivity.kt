@@ -1,8 +1,8 @@
 package com.example.notes
 
+import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
@@ -14,13 +14,14 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.nio.file.attribute.AclEntry.Builder
 
 class MainActivity : AppCompatActivity() {
     private var recyclerView: RecyclerView? = null
@@ -28,10 +29,13 @@ class MainActivity : AppCompatActivity() {
     var databaseHelper: DatabaseHelper? = null
     var adapter: MainAdapter? = null
     lateinit var receiver: BatteryLowNotify
-    val CHANNEL_ID = "iva"
+    lateinit var title: TextView
+    lateinit var description: TextView
+    private val CHANNEL_ID = "Channel ID"
 
 
-    override fun onCreate(savedInstanceState: Bundle?){
+    @RequiresApi(Build.VERSION_CODES.S)
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -44,49 +48,6 @@ class MainActivity : AppCompatActivity() {
         recyclerView!!.layoutManager = LinearLayoutManager(this)
         adapter = MainAdapter(this, databaseHelper!!.getArray())
         recyclerView!!.setAdapter(adapter)
-
-        fun showExpandableNotification() {
-
-            val intent = Intent(this, this::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            intent.putExtra("name", "asd")
-            intent.putExtra("lastName", "asd")
-            val pendingIntent =
-                PendingIntent.getActivity(
-                    this,
-                    0,
-                    intent,
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                    } else {
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                    }
-                )
-
-            val builder = NotificationCompat.Builder(this, CHANNEL_ID).apply {
-                setSmallIcon(R.drawable.ic_launcher_background)
-                setContentTitle("asd")
-                setContentText("asd")
-                setContentIntent(pendingIntent)
-                priority = NotificationCompat.PRIORITY_DEFAULT
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    CHANNEL_ID,
-                    "Test Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT
-                )
-                val notificationManager =
-                    getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.createNotificationChannel(channel)
-            }
-
-            with(NotificationManagerCompat.from(this)) {
-                notify(1, builder.build())
-            }
-        }
-
 
         addbutton!!.setOnClickListener(View.OnClickListener {
             val dialog = Dialog(this@MainActivity)
@@ -104,6 +65,8 @@ class MainActivity : AppCompatActivity() {
 
                 databaseHelper!!.insert(sTitle, sDescription)
                 adapter!!.updateArray(databaseHelper!!.getArray())
+                this.title = titleedittext
+                this.description = descriptionedittext
 
                 showExpandableNotification()
 
@@ -116,6 +79,53 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(receiver, it)
         }
 
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    @SuppressLint("UnspecifiedImmutableFlag")
+    private fun showExpandableNotification() {
+        val bitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.dog)
+
+        val intent = Intent(this, this::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.putExtra("name", title.text.toString())
+        intent.putExtra("lastName", description.text.toString())
+        val pendingIntent =
+            PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
+            )
+
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID).apply {
+            setSmallIcon(R.drawable.dog)
+            setContentTitle(title.text.toString())
+            setContentText(this@MainActivity.description.text.toString())
+            setLargeIcon(bitmap)
+            setContentIntent(pendingIntent)
+            setStyle(NotificationCompat.BigPictureStyle().bigPicture(bitmap))
+            priority = NotificationCompat.PRIORITY_DEFAULT
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Test Channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        with(NotificationManagerCompat.from(this)) {
+            notify(1, builder.build())
+        }
     }
 
 }
