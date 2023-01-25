@@ -52,8 +52,7 @@ class MainAdapter(var activity: Activity, var jsonArray: JSONArray) :
                     dialog.setContentView(R.layout.dialog_main)
                     dialog.show()
                     val titleedittext = dialog.findViewById<EditText>(R.id.title_edittext)
-                    val descriptionedittext =
-                        dialog.findViewById<EditText>(R.id.description_edittext)
+                    val descriptionedittext = dialog.findViewById<EditText>(R.id.description_edittext)
                     val updatebutton = dialog.findViewById<Button>(R.id.submit_button)
                     titleedittext.setText(sTitle)
                     descriptionedittext.setText(sDescription)
